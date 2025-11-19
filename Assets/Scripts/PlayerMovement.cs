@@ -24,27 +24,31 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float jumpStrength;
     [SerializeField] private float jumpCooldown;
     [SerializeField] private float airControl;
+    [SerializeField] private float launchPadStrength;
     private Vector3 horizontalVelocity = Vector3.zero;
     
-    private bool canJump = true;
-    private bool isGrounded;
     [Header("Ground Check")]
     [SerializeField] private float playerHeight;
     [SerializeField] private LayerMask groundLayer;
+    private bool canJump = true;
+    private bool isGrounded;
 
     private RaycastHit slopeHit;
     private Vector3 maxAirVelocity;
 
     [Header("Weapon-Based Propulsion Variables")]
+    [SerializeField] private GameObject prop;
     [SerializeField] private float propForce;
     [SerializeField] private float propFireRate;
     [SerializeField] private int propAmmo;
+    private float nextProp = 0.0f;
 
     [Header("Wall Run Variables")]
     [SerializeField] private float wallRunDecel;
     [SerializeField] private float wallRunCooldown;
     [SerializeField] private LayerMask wallLayer;
     [SerializeField] private float wallCheckDistance;
+    private Vector3 wallNormal = Vector3.zero;
     private bool canWallRun = true;
     private bool isWallRunning = false;
 
@@ -64,9 +68,6 @@ public class PlayerMovement : MonoBehaviour
 
         MoveInput();
         CheckWallRun();
-        
-        Vector3 horVelDebug = new Vector3(rb.velocity.x, 0.0f, rb.velocity.z);
-        Debug.Log(horVelDebug.magnitude);
     }
     private void FixedUpdate()
     {
@@ -79,14 +80,18 @@ public class PlayerMovement : MonoBehaviour
         inputY = Input.GetAxisRaw("Vertical");
 
         if (Input.GetKey(KeyCode.Space) && canJump && (isGrounded || isWallRunning)) {
-            Debug.Log("Jump");
             canJump = false;
             Jump();
             Invoke(nameof(ResetCanJump), jumpCooldown);
         }
 
-        if (Input.GetKeyDown(KeyCode.Mouse0))
+        if (Input.GetKeyDown(KeyCode.Mouse0) && PropIsActive() && Time.time >= nextProp && propAmmo > 0)
         {
+            nextProp = Time.time + (1.0f / propFireRate);
+            propAmmo--;
+            if (propAmmo <= 0)
+                prop.SetActive(false);
+
             Vector3 propDirection = playerCamera.transform.forward;
             Prop(propDirection);
         }
@@ -180,6 +185,16 @@ public class PlayerMovement : MonoBehaviour
         rb.velocity = newVelocity;
     }
 
+    public int GetPropAmmo()
+    {
+        return propAmmo;
+    }
+
+    public bool PropIsActive()
+    {
+        return prop.activeSelf;
+    }
+
     private void CheckWallRun()
     {
         if (!canWallRun) return;
@@ -194,6 +209,7 @@ public class PlayerMovement : MonoBehaviour
         if (Physics.Raycast(transform.position, moveDirection.normalized, out RaycastHit wallHit, wallCheckDistance, wallLayer))
         {
             isWallRunning = true;
+            wallNormal = wallHit.normal;
         } else
         {
             isWallRunning = false;
@@ -204,8 +220,13 @@ public class PlayerMovement : MonoBehaviour
     private void WallRun()
     {
         rb.useGravity = false;
-
         horizontalVelocity = new Vector3(rb.velocity.x, 0.0f, rb.velocity.z);
+        Vector3 wallForward = Vector3.Cross(wallNormal, Vector3.up);
+
+        if (Vector3.Dot(wallForward, horizontalVelocity) < 0)
+            wallForward *= -1;
+
+        horizontalVelocity = wallForward * horizontalVelocity.magnitude;
         rb.velocity = horizontalVelocity;
         float preWallRunSpeed = horizontalVelocity.magnitude;
 
@@ -215,8 +236,9 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        float newSpeed = Mathf.Max(0.0f, preWallRunSpeed - wallRunDecel * Time.fixedDeltaTime);
+        float newSpeed = Mathf.Max(0.0f, preWallRunSpeed - (wallRunDecel * Time.fixedDeltaTime));
         rb.velocity = horizontalVelocity.normalized * newSpeed;
+        maxAirVelocity = rb.velocity;
     }
 
     private IEnumerator WallRunCooldown()
@@ -236,6 +258,24 @@ public class PlayerMovement : MonoBehaviour
         float outSpeed = horizontalVelocity.magnitude;
 
         return outSpeed;
+    }
+
+    public void LaunchPad()
+    {
+        Vector3 preLaunchVelocity = new Vector3(rb.velocity.x, 0.0f, rb.velocity.z);
+
+        if (preLaunchVelocity.magnitude < 0.1f)
+        {
+            preLaunchVelocity = new Vector3(0.1f, 0.0f, 0.1f);
+        }
+
+        if (preLaunchVelocity.magnitude < moveSpeed)
+            maxAirVelocity = preLaunchVelocity.normalized * moveSpeed;
+        else
+            maxAirVelocity = preLaunchVelocity;
+
+        rb.velocity = new Vector3(rb.velocity.x, 0.0f, rb.velocity.z);
+        rb.AddForce(Vector3.up * launchPadStrength, ForceMode.Impulse);
     }
 }
 

@@ -8,6 +8,7 @@ public class Camera : MonoBehaviour
     [SerializeField] private float sensY = 5.0f;
 
     [SerializeField] private Transform look;
+    [SerializeField] private Transform weapon;
     private float rotX;
     private float rotY;
 
@@ -17,7 +18,6 @@ public class Camera : MonoBehaviour
         Cursor.visible = false;
     }
 
-    // Update is called once per frame
     void Update()
     {
         float mouseX = Input.GetAxisRaw("Mouse X") * sensX * Time.deltaTime;
@@ -29,5 +29,12 @@ public class Camera : MonoBehaviour
 
         transform.rotation = Quaternion.Euler(rotX, rotY, 0);
         look.rotation = Quaternion.Euler(-0, rotY, 0);
+
+        if (weapon != null)
+        {
+            Vector3 offset = transform.forward * 0.5f + transform.right * 0.375f + transform.up * -0.2f;
+            weapon.position = transform.position + offset;
+            weapon.rotation = transform.rotation;
+        }
     }
 }

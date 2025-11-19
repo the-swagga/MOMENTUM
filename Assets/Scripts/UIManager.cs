@@ -8,8 +8,9 @@ public class UIManager : MonoBehaviour
 {
     [SerializeField] private PlayerMovement pm;
     [SerializeField] private TextMeshProUGUI xSpeedText;
+    [SerializeField] private TextMeshProUGUI propAmmoText;
 
-    void Update()
+    private void Update()
     {
         if (pm != null && xSpeedText != null)
         {
@@ -28,6 +29,15 @@ public class UIManager : MonoBehaviour
         else if (xSpeedText != null)
         {
             xSpeedText.text = "SPEED: N/A";
+        }
+
+        if (pm != null && propAmmoText != null && pm.PropIsActive())
+        {
+            int ammo = pm.GetPropAmmo();
+            propAmmoText.text = "AMMO: " + ammo.ToString();
+        } else
+        {
+            propAmmoText.text = "";
         }
     }
 }
