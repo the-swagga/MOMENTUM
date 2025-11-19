@@ -7,6 +7,7 @@ using TMPro;
 public class UIManager : MonoBehaviour
 {
     [SerializeField] private PlayerMovement pm;
+    [SerializeField] private GameObject tutorialTextCont;
     [SerializeField] private TextMeshProUGUI xSpeedText;
     [SerializeField] private TextMeshProUGUI propAmmoText;
 
@@ -38,6 +39,11 @@ public class UIManager : MonoBehaviour
         } else
         {
             propAmmoText.text = "";
+        }
+
+        if (pm.transform.position.y >= 30.0f)
+        {
+            tutorialTextCont.SetActive(false);
         }
     }
 }

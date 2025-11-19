@@ -20,6 +20,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float moveSpeed;
     [SerializeField] private float slopeAccelConst;
     [SerializeField] private float groundDrag;
+    [SerializeField] private float slopeDrag;
     [SerializeField] private float airDrag;
     [SerializeField] private float jumpStrength;
     [SerializeField] private float jumpCooldown;
@@ -39,6 +40,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Weapon-Based Propulsion Variables")]
     [SerializeField] private GameObject prop;
     [SerializeField] private float propForce;
+    [SerializeField] private float maxVertSpeedProp;
     [SerializeField] private float propFireRate;
     [SerializeField] private int propAmmo;
     private float nextProp = 0.0f;
@@ -108,8 +110,16 @@ public class PlayerMovement : MonoBehaviour
 
             if (isGrounded && IsSliding())
             {
-                float slopeMult = Mathf.Sin(slopeAngle * Mathf.Deg2Rad) * slopeAccelConst;
-                rb.AddForce(slopeDirection * moveSpeed * 10.0f * slopeMult, ForceMode.Force);
+                if (slopeAngle > 0.0f)
+                {
+                    rb.drag = slopeDrag;
+                    float slopeMult = Mathf.Sin(slopeAngle * Mathf.Deg2Rad) * slopeAccelConst;
+                    rb.AddForce(slopeDirection * moveSpeed * 10.0f * slopeMult, ForceMode.Force);
+                } else
+                {
+                    rb.drag = groundDrag;
+                }
+                
             }                
         }
 
@@ -142,7 +152,7 @@ public class PlayerMovement : MonoBehaviour
         {
             WallRun();
         }
-    }    
+    }
 
     private void Jump()
     {
@@ -181,6 +191,10 @@ public class PlayerMovement : MonoBehaviour
     {
         Vector3 currentVelocity = rb.velocity;
         Vector3 newVelocity = currentVelocity + (-direction.normalized * propForce);
+
+        if (newVelocity.y > maxVertSpeedProp)
+            newVelocity = new Vector3(rb.velocity.x, maxVertSpeedProp, rb.velocity.z);
+
         maxAirVelocity = newVelocity;
         rb.velocity = newVelocity;
     }
