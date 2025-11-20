@@ -295,5 +295,11 @@ public class PlayerMovement : MonoBehaviour
         rb.velocity = new Vector3(rb.velocity.x, 0.0f, rb.velocity.z);
         rb.AddForce(Vector3.up * launchPadStrength, ForceMode.Impulse);
     }
+
+    public void GameEnd()
+    {
+        moveSpeed = 0.0f;
+        prop.SetActive(false);
+    }
 }
 

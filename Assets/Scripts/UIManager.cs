@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEngine.UIElements;
 
 public class UIManager : MonoBehaviour
 {
@@ -12,11 +13,17 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI xSpeedText;
     [SerializeField] private TextMeshProUGUI propAmmoText;
     [SerializeField] private TextMeshProUGUI speedrunText;
+    [SerializeField] private TextMeshProUGUI crosshair;
+    [SerializeField] private TextMeshProUGUI playAgainText;
 
     [SerializeField] private GameObject tutorialTextCont;
 
+    private bool gameOver = false;
+
     private void Update()
     {
+        if (gameOver) return;
+
         if (pm != null && xSpeedText != null)
         {
             int speed = Mathf.RoundToInt(pm.GetXSpeed() * 100);
@@ -57,6 +64,34 @@ public class UIManager : MonoBehaviour
         {
             Debug.Log("arnav");
             tutorialTextCont.SetActive(false);
+        }
+    }
+
+    public void GameEnd()
+    {
+        gameOver = true;
+
+        xSpeedText.text = "";
+        propAmmoText.text = "";
+        crosshair.text = "";
+
+        if (speedrun != null)
+        {
+            if (speedrun.GetActive())
+            {
+                speedrunText.text = speedrun.GetSpeedrunTime();
+
+                Vector3 pos = speedrunText.rectTransform.localPosition;
+                pos.y = 0.0f;
+                speedrunText.rectTransform.localPosition = pos;
+
+                speedrunText.fontSize *= 2.5f;
+            }
+        }
+
+        if (playAgainText != null)
+        {
+            playAgainText.text = "Press R to Play Again!";
         }
     }
 }
